@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build outputs
+client/dist/
+server/dist/
+
+# Uploads (user documents)
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Temp files
+tmp/
+temp/

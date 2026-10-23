@@ -1,0 +1,25 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import authController from '../controllers/authController.js';
+import { authenticate } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+
+const router = Router();
+
+const registerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  email: z.string().email('Invalid email format').toLowerCase().trim(),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+});
+
+const loginSchema = z.object({
+  email: z.string().email('Invalid email format').toLowerCase().trim(),
+  password: z.string().min(1, 'Password is required')
+});
+
+router.post('/register', validate(registerSchema), authController.register);
+router.post('/login', validate(loginSchema), authController.login);
+router.post('/logout', authController.logout);
+router.get('/me', authenticate, authController.getMe);
+
+export default router;
