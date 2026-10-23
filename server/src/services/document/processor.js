@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import pdfParse from 'pdf-parse';
+import { extractText } from 'unpdf';
 import Document from '../../models/Document.js';
 import DocumentChunk from '../../models/DocumentChunk.js';
 import { normalizeText, generateChunkId } from '../../utils/helpers.js';
@@ -111,8 +112,18 @@ export async function processDocument(documentId) {
     const ext = (doc.fileType || path.extname(doc.originalFilename).replace('.', '')).toLowerCase();
 
     if (ext === 'pdf') {
-      const parsedPdf = await pdfParse(fileBuffer);
-      rawText = parsedPdf.text || '';
+      try {
+        const result = await extractText(new Uint8Array(fileBuffer));
+        rawText = Array.isArray(result.text) ? result.text.join('\n\n') : (result.text || '');
+      } catch (unpdfErr) {
+        // Fallback to pdfParse
+        try {
+          const parsedPdf = await pdfParse(fileBuffer);
+          rawText = parsedPdf.text || '';
+        } catch (pdfParseErr) {
+          throw new Error(`Failed to extract text from PDF: ${unpdfErr.message || pdfParseErr.message}`);
+        }
+      }
 
       if (!rawText || rawText.trim().length === 0) {
         throw new Error('Non-searchable or empty PDF. Scanned images without OCR are not supported.');
