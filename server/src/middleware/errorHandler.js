@@ -56,15 +56,15 @@ export const errorHandler = (err, req, res, next) => {
     message = 'Authentication token has expired. Please log in again.';
   }
 
-  // Handle Multer Errors
-  if (err instanceof multer.MulterError) {
+  // Handle Multer Errors and upload rejections
+  if (err instanceof multer.MulterError || err.message?.includes('Unsupported file format') || err.message?.includes('Unsupported MIME type')) {
     statusCode = 400;
     if (err.code === 'LIMIT_FILE_SIZE') {
       message = `File too large. Maximum allowed size is ${config.maxFileSizeMb}MB.`;
     } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
       message = `Unexpected file field '${err.field}'. Expected 'file'.`;
     } else {
-      message = `File upload error: ${err.message}`;
+      message = err.message || `File upload error: ${err.message}`;
     }
     errors = [{ field: err.field || 'file', message }];
   }

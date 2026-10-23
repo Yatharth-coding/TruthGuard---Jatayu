@@ -39,11 +39,21 @@ const fileFilter = (req, file, cb) => {
     'application/octet-stream' // fallback for some markdown uploads
   ];
 
-  if (allowedExtensions.includes(ext) || allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Unsupported file format. Only PDF, TXT, and Markdown (.md) documents are accepted.'));
+  // Enforce valid extensions: must be .pdf, .txt, or .md
+  if (!allowedExtensions.includes(ext)) {
+    const err = new Error('Unsupported file format. Only PDF, TXT, and Markdown (.md) documents are accepted.');
+    err.statusCode = 400;
+    return cb(err);
   }
+
+  // Also verify MIME type if present
+  if (file.mimetype && !allowedMimeTypes.includes(file.mimetype)) {
+    const err = new Error('Unsupported MIME type. Only PDF, TXT, and Markdown (.md) documents are accepted.');
+    err.statusCode = 400;
+    return cb(err);
+  }
+
+  cb(null, true);
 };
 
 const upload = multer({

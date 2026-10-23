@@ -8,6 +8,9 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "vitest run",
+    "test:unit": "vitest run test/backend.test.js test/critic-cases.test.js test/synthesizer.test.js",
+    "test:integration": "vitest run test/auth.test.js test/document.test.js test/retrieval.test.js test/api-routes.test.js",
+    "test:e2e": "vitest run test/api-routes.test.js",
     "test:live": "node test/live-verification.js",
     "test:gemini": "node test/test-gemini-agents.js"
   },
@@ -31,6 +34,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.4",
+    "supertest": "^7.3.1",
     "vitest": "^2.0.4"
   }
 }

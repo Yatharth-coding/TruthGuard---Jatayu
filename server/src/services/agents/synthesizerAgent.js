@@ -84,20 +84,24 @@ CRITICAL RULES:
         : 'Unable to formulate an answer from the provided evidence.';
 
       const citations = Array.isArray(response.citations)
-        ? response.citations.map((c, i) => {
-            const matchedPassage = passages.find(
-              p => (c.chunkId && p.chunkId === c.chunkId) || (c.documentId && String(p.documentId) === String(c.documentId))
-            ) || passages[Math.min(i, passages.length - 1)];
+        ? response.citations
+            .map(c => {
+              const matchedPassage = passages.find(
+                p => (c.chunkId && p.chunkId === c.chunkId) || (c.documentId && String(p.documentId) === String(c.documentId))
+              );
 
-            return {
-              documentId: c.documentId || matchedPassage?.documentId || null,
-              chunkId: c.chunkId || matchedPassage?.chunkId || '',
-              documentTitle: c.documentTitle || matchedPassage?.documentTitle || '',
-              excerpt: (c.excerpt && typeof c.excerpt === 'string') ? c.excerpt.trim() : (matchedPassage?.chunkText?.slice(0, 150) || ''),
-              versionLabel: c.versionLabel || matchedPassage?.versionLabel || '',
-              effectiveDate: c.effectiveDate || matchedPassage?.effectiveDate || null
-            };
-          })
+              if (!matchedPassage) return null; // Drop hallucinated citations with no evidence match
+
+              return {
+                documentId: matchedPassage.documentId,
+                chunkId: c.chunkId || matchedPassage.chunkId || '',
+                documentTitle: matchedPassage.documentTitle || c.documentTitle || '',
+                excerpt: (c.excerpt && typeof c.excerpt === 'string' && c.excerpt.trim()) ? c.excerpt.trim() : (matchedPassage.chunkText?.slice(0, 150) || ''),
+                versionLabel: matchedPassage.versionLabel || c.versionLabel || '',
+                effectiveDate: matchedPassage.effectiveDate || c.effectiveDate || null
+              };
+            })
+            .filter(Boolean)
         : passages.slice(0, 3).map(p => ({
             documentId: p.documentId,
             chunkId: p.chunkId,

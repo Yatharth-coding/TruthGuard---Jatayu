@@ -123,17 +123,23 @@ ${passagesText}
 Task: Perform adversarial verification and return the critique JSON object.`;
 
     let llmCritique = null;
+    let criticErrorOccurred = false;
     try {
       llmCritique = await this.provider.completeJSON(systemPrompt, userPrompt);
     } catch (err) {
-      console.warn('[CriticAgent] LLM completion failed, using deterministic checks only:', err.message);
+      console.warn('[CriticAgent] LLM completion failed:', err.message);
+      criticErrorOccurred = true;
     }
 
     // Run deterministic rule-based checks
     const deterministicFindings = this.runDeterministicChecks(answer, passages);
 
     // Merge and harmonize results
-    return this.mergeCritiqueResults(llmCritique, deterministicFindings, passages);
+    const merged = this.mergeCritiqueResults(llmCritique, deterministicFindings, passages);
+    if (criticErrorOccurred) {
+      merged.criticError = true;
+    }
+    return merged;
   }
 
   /**

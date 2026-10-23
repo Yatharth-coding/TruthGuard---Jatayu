@@ -67,7 +67,7 @@ export async function retrieveEvidence(question, userId, options = {}) {
   const processedDocs = await Document.find({
     owner: userId,
     processingStatus: 'processed'
-  }).select('_id title versionLabel effectiveDate publicationDate category');
+  }).select('_id title versionLabel effectiveDate publicationDate category supersedesDocument supersededByDocument');
 
   if (!processedDocs || processedDocs.length === 0) {
     return {
@@ -130,6 +130,8 @@ export async function retrieveEvidence(question, userId, options = {}) {
       effectiveDate: doc.effectiveDate || chunk.metadata?.effectiveDate || null,
       publicationDate: doc.publicationDate || chunk.metadata?.publicationDate || null,
       category: doc.category || chunk.metadata?.category || 'General',
+      supersedesDocument: doc.supersedesDocument || chunk.metadata?.supersedesDocument || null,
+      supersededByDocument: doc.supersededByDocument || chunk.metadata?.supersededByDocument || null,
       score
     };
   });

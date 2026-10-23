@@ -324,25 +324,44 @@ From the root project directory:
 | `npm run dev:server` | `cd server && npm run dev` | Starts server with nodemon |
 | `npm run dev:client` | `cd client && npm run dev` | Starts client with Vite dev server |
 | `npm run build` | `cd client && npm run build` | Creates production client bundle in `client/dist` |
-| `npm run test` | `cd server && npm test` | Runs the Vitest test suite |
+| `npm test` | `cd server && npm test` | Runs all 7 test suites (75 automated tests) |
+| `npm run test:unit` | `cd server && npm run test:unit` | Runs unit test suites (critic cases, synthesizer, helpers) |
+| `npm run test:integration`| `cd server && npm run test:integration` | Runs integration test suites (auth, docs, retrieval, API) |
+| `npm run test:e2e` | `cd server && npm run test:e2e` | Runs full Express REST route integration tests |
+| `npm run test:gemini` | `cd server && npm run test:gemini` | Manual verification using real Google Gemini API |
 | `npm run lint` | `cd client && npm run lint` | Runs ESLint on the frontend codebase |
 
 ---
 
 ## Testing & Verification
 
-Run the automated test suite:
+TruthGuard includes a comprehensive test suite of 75 automated tests across 7 test files, running in Vitest against an isolated local test database (`mongodb://127.0.0.1:27017/truthguard_test`):
+
 ```bash
+# Run all automated tests (75 tests)
 npm test
+
+# Run unit tests only (26 tests)
+npm run test:unit
+
+# Run integration tests only (49 tests)
+npm run test:integration
+
+# Run API endpoint integration tests
+npm run test:e2e
+
+# Optional: Run live test with real Google Gemini key
+npm run test:gemini
 ```
-The test suite validates:
-- Filename sanitization against path traversal attacks.
-- Document text normalization and sliding-window chunking.
-- Stopword extraction and tokenization.
-- Synthesizer output structure and citation preservation.
-- Critic contradiction detection across conflicting document versions.
-- Resolution logic for supported, conflict, and insufficient evidence statuses.
-- End-to-end pipeline execution with graceful offline fallbacks.
+
+### Verified Test Domains
+1. **Authentication & Security** (`test/auth.test.js` - 13 tests): Registration, login, duplicate email prevention, password hashing, 401s on unauthenticated access, JWT cookie / Bearer token validation, tenant isolation.
+2. **Document Processing & Storage** (`test/document.test.js` - 11 tests): Uploads (.pdf, .txt, .md), chunking, indexing, empty file handling, extension validation, cascading deletion, disk cleanup.
+3. **Retrieval Engine** (`test/retrieval.test.js` - 8 tests): Keyword tokenization, stopword removal, relevance ranking, multi-tenant isolation, deduplication, supersession metadata survival.
+4. **Synthesizer Agent** (`test/synthesizer.test.js` - 5 tests): Grounded answer formulation, rejection of hallucinated/fabricated citations, missing evidence handling, provider timeout/error fallback.
+5. **Adversarial Verification 10 Cases** (`test/critic-cases.test.js` - 10 tests): Cases A through J (unresolved conflicts, temporal supersession, unsupported claims, distinct scopes, partial contradictions, numeric discrepancies).
+6. **REST API Endpoints** (`test/api-routes.test.js` - 17 tests): Express routing, Zod validation, conversation lifecycle, health endpoint, cascading document/chunk deletion.
+7. **Core Pipeline Unit Tests** (`test/backend.test.js` - 11 tests): Helper sanitization, sliding chunk windowing, mock provider deterministic analysis.
 
 ---
 

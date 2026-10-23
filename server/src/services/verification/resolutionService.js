@@ -34,15 +34,15 @@ export class ResolutionService {
       };
     }
 
-    // 2. Check for critic execution errors
-    if (!criticResult) {
+    // 2. Check for critic execution errors or failures
+    if (!criticResult || criticResult.criticError) {
       return {
         answer: synthesizerResult.answer,
         verificationStatus: 'verification_error',
         citations: this.enrichCitations(synthesizerResult.citations || [], passages),
         conflicts: [],
         limitations: [
-          'Adversarial critique could not be completed. Verification status unconfirmed.'
+          'Adversarial critique could not be completed (critic model failure, timeout, or unavailable provider). Verification status unconfirmed.'
         ],
         processingTime: 0
       };
@@ -148,20 +148,38 @@ export class ResolutionService {
       }));
     }
 
-    return citations.map(c => {
+    // Only allow citations that genuinely match retrieved passages
+    const validCitations = [];
+    for (const c of citations) {
       const match = passages.find(
         p => (c.chunkId && p.chunkId === c.chunkId) || (c.documentId && String(p.documentId) === String(c.documentId))
       );
 
-      return {
-        documentId: c.documentId || match?.documentId || null,
-        chunkId: c.chunkId || match?.chunkId || '',
-        documentTitle: c.documentTitle || match?.documentTitle || 'Reference Document',
-        excerpt: c.excerpt || match?.chunkText?.slice(0, 200) || '',
-        versionLabel: c.versionLabel || match?.versionLabel || '',
-        effectiveDate: c.effectiveDate || match?.effectiveDate || null
-      };
-    });
+      if (match) {
+        validCitations.push({
+          documentId: match.documentId,
+          chunkId: match.chunkId,
+          documentTitle: match.documentTitle || c.documentTitle || 'Reference Document',
+          excerpt: c.excerpt || match.chunkText?.slice(0, 200) || '',
+          versionLabel: match.versionLabel || '',
+          effectiveDate: match.effectiveDate || null
+        });
+      }
+    }
+
+    // If all citations provided by the synthesizer were fabricated/unmatched, fallback to top retrieved evidence
+    if (validCitations.length === 0 && passages.length > 0) {
+      return passages.slice(0, 2).map(p => ({
+        documentId: p.documentId,
+        chunkId: p.chunkId,
+        documentTitle: p.documentTitle,
+        excerpt: p.chunkText.slice(0, 200),
+        versionLabel: p.versionLabel,
+        effectiveDate: p.effectiveDate
+      }));
+    }
+
+    return validCitations;
   }
 }
 

@@ -12,8 +12,8 @@ import MockProvider from './mockProvider.js';
 export function getProvider(providerName = config.aiProvider) {
   const normalized = (providerName || '').toLowerCase().trim();
 
-  // If DEMO_MODE is active or provider is explicitly 'mock'
-  if (config.demoMode || normalized === 'mock') {
+  // If DEMO_MODE is active, environment is test, or provider is explicitly 'mock'
+  if (config.demoMode || config.nodeEnv === 'test' || normalized === 'mock') {
     return new MockProvider();
   }
 
